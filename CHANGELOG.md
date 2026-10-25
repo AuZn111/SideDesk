@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.1
+
+- 恢复脚本改为 ASCII 文件名，修复在 GitHub Actions / 部分解压工具中的路径兼容性。
+- 仓库工程化：加入 MIT License、GitHub Actions 构建和发布说明。
+
 ## 1.3.0
 
 - 移除任务栏美化功能及相关设置、托盘菜单、命令行工具。

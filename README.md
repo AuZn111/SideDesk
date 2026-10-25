@@ -75,7 +75,7 @@
 
 如果程序被任务管理器强制结束，图标可能仍处于隐藏状态，可以：
 
-- 双击 `恢复桌面图标.cmd`；或
+- 双击 `restore-desktop-icons.cmd`；或
 - 运行 `SideDesk.exe --restore-icons`；或
 - 重新启动 SideDesk，程序会自动恢复；也可通过底部“显示图标”按钮恢复。
 
@@ -141,7 +141,7 @@ src/SideDesk/
     ColorUtil.cs                 颜色解析与混合
 tools/
   restore-desktop-icons.ps1      独立图标恢复脚本
-  恢复桌面图标.cmd
+  restore-desktop-icons.cmd
 ```
 
 ## 兼容性与限制
