@@ -1,0 +1,198 @@
+<Window x:Class="SideDesk.AppearanceWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="SideDesk 外观设置"
+        Width="484"
+        Height="660"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        WindowStartupLocation="CenterScreen"
+        FontFamily="{StaticResource AppFont}"
+        Foreground="{StaticResource TextPrimary}"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="Grayscale"
+        PreviewKeyDown="Window_PreviewKeyDown"
+        Closing="Window_Closing">
+
+    <Border Background="#F5181B24"
+            BorderBrush="#32FFFFFF"
+            BorderThickness="1"
+            CornerRadius="22">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Margin="22,18,16,10"
+                  Background="Transparent"
+                  MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal">
+                    <Border x:Name="DialogLogo"
+                            Width="36"
+                            Height="36"
+                            CornerRadius="10"
+                            Background="{DynamicResource AccentGradient}">
+                        <TextBlock Text="&#xE790;"
+                                   Style="{StaticResource Glyph}"
+                                   FontSize="16"
+                                   Foreground="#FFFFFF" />
+                    </Border>
+                    <StackPanel Margin="11,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="外观设置" FontSize="15" FontWeight="SemiBold"
+                                   Foreground="#F7F9FD" />
+                        <TextBlock Text="颜色、透明度与箭头"
+                                   FontSize="10" Margin="0,2,0,0"
+                                   Foreground="{StaticResource TextMuted}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <Button Grid.Column="1"
+                        Style="{StaticResource IconButton}"
+                        Click="CloseButton_Click"
+                        ToolTip="关闭"
+                        AutomationProperties.Name="关闭外观设置">
+                    <TextBlock Text="&#xE711;" Style="{StaticResource Glyph}" FontSize="12" />
+                </Button>
+            </Grid>
+
+            <ScrollViewer Grid.Row="1"
+                          Padding="22,0,14,10"
+                          VerticalScrollBarVisibility="Visible"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel>
+                    <Border Style="{StaticResource SettingsCard}">
+                        <StackPanel>
+                            <Grid>
+                                <TextBlock Text="侧边栏" Style="{StaticResource SectionTitle}" />
+                                <TextBlock Text="实时预览" HorizontalAlignment="Right"
+                                           FontSize="9.5" Foreground="{StaticResource TextMuted}"
+                                           VerticalAlignment="Center" />
+                            </Grid>
+                            <TextBlock Text="主题色会同时影响侧边栏渐变、选中态、箭头和按钮。"
+                                       FontSize="10.5" Foreground="{StaticResource TextMuted}"
+                                       Margin="0,5,0,0" TextWrapping="Wrap" />
+
+                            <TextBlock Text="主题颜色" Style="{StaticResource FieldLabel}"
+                                       Margin="0,15,0,7" />
+                            <WrapPanel x:Name="SidebarSwatches" />
+
+                            <Grid Margin="0,1,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="自定义" FontSize="10.5"
+                                           Foreground="{StaticResource TextMuted}"
+                                           VerticalAlignment="Center" Margin="0,0,10,0" />
+                                <TextBox x:Name="SidebarHexBox"
+                                         Grid.Column="1"
+                                         Style="{StaticResource FormTextBox}"
+                                         Width="112"
+                                         MaxLength="7"
+                                         HorizontalAlignment="Left"
+                                         AutomationProperties.Name="侧边栏颜色十六进制值" />
+                                <Button Grid.Column="2"
+                                        Content="应用"
+                                        Style="{StaticResource PillButton}"
+                                        Click="ApplySidebarHex_Click" />
+                            </Grid>
+
+                            <Grid Margin="0,16,0,0">
+                                <TextBlock Text="不透明度" FontSize="10.5"
+                                           Foreground="{StaticResource TextMuted}"
+                                           VerticalAlignment="Center" />
+                                <TextBlock x:Name="SidebarOpacityValue"
+                                           HorizontalAlignment="Right"
+                                           FontSize="10.5"
+                                           Foreground="{StaticResource AccentSoftBrush}" />
+                            </Grid>
+                            <Slider x:Name="SidebarOpacitySlider"
+                                    Style="{StaticResource DarkSlider}"
+                                    Minimum="35" Maximum="100"
+                                    ValueChanged="SidebarOpacity_ValueChanged" />
+
+                            <Border x:Name="SidebarPreview"
+                                    Height="72"
+                                    Margin="0,13,0,0"
+                                    CornerRadius="12"
+                                    BorderBrush="#2AFFFFFF"
+                                    BorderThickness="1"
+                                    IsHitTestVisible="False">
+                                <Grid Margin="13,0">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Border Width="26" Height="26" CornerRadius="8"
+                                                Background="{DynamicResource AccentGradient}">
+                                            <Grid Width="13" Height="10">
+                                                <Rectangle Width="10" Height="1.8" RadiusX="0.9"
+                                                           Fill="White" HorizontalAlignment="Right"
+                                                           VerticalAlignment="Top" />
+                                                <Rectangle Width="7" Height="1.8" RadiusX="0.9"
+                                                           Fill="#E8FFFFFF" HorizontalAlignment="Right"
+                                                           VerticalAlignment="Center" />
+                                                <Rectangle Width="4" Height="1.8" RadiusX="0.9"
+                                                           Fill="#C9FFFFFF" HorizontalAlignment="Right"
+                                                           VerticalAlignment="Bottom" />
+                                            </Grid>
+                                        </Border>
+                                        <StackPanel Margin="9,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="SideDesk 预览" FontSize="11"
+                                                       FontWeight="SemiBold" Foreground="#F5F7FC" />
+                                            <TextBlock Text="桌面图标，安静收好"
+                                                       FontSize="9" Foreground="#A8B2C6"
+                                                       Margin="0,2,0,0" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <Grid Margin="0,14,0,0">
+                                <TextBlock Text="箭头不透明度" FontSize="10.5"
+                                           Foreground="{StaticResource TextMuted}"
+                                           VerticalAlignment="Center" />
+                                <TextBlock x:Name="ArrowOpacityValue"
+                                           HorizontalAlignment="Right"
+                                           FontSize="10.5"
+                                           Foreground="{StaticResource AccentSoftBrush}" />
+                            </Grid>
+                            <Slider x:Name="ArrowOpacitySlider"
+                                    Style="{StaticResource DarkSlider}"
+                                    Minimum="15" Maximum="100"
+                                    ValueChanged="ArrowOpacity_ValueChanged" />
+                            <TextBlock Text="箭头平时自动隐藏；把光标移到屏幕右边缘时出现。"
+                                       FontSize="9.5"
+                                       Foreground="{StaticResource TextMuted}"
+                                       Margin="0,4,0,0"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <Grid Grid.Row="2" Margin="22,8,22,18">
+                <Button Content="恢复默认外观"
+                        Style="{StaticResource LinkButton}"
+                        HorizontalAlignment="Left"
+                        Click="RestoreDefaults_Click" />
+                <Button Content="完成"
+                        Style="{StaticResource PrimaryButton}"
+                        Width="92"
+                        HorizontalAlignment="Right"
+                        Click="CloseButton_Click" />
+            </Grid>
+        </Grid>
+    </Border>
+</Window>
