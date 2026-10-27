@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -42,6 +44,7 @@ public partial class MainWindow : Window
     private bool _panelOpen = true;
     private bool _appearanceOpen;
     private bool _arrowShown;
+    private bool _fullscreenActive;
     private DateTime _arrowHideAt = DateTime.MaxValue;
     private bool _exiting;
     private bool _iconsHidden;
@@ -623,7 +626,24 @@ public partial class MainWindow : Window
 
     private void ArrowTimer_Tick(object? sender, EventArgs e)
     {
-        if (_exiting || _panelOpen)
+        if (_exiting)
+        {
+            return;
+        }
+
+        if (IsFullscreenAppActive())
+        {
+            SuppressForFullscreen();
+            return;
+        }
+
+        if (_fullscreenActive)
+        {
+            _fullscreenActive = false;
+            AppLog.Write("全屏应用已退出，恢复侧边栏自动弹出。");
+        }
+
+        if (_panelOpen)
         {
             return;
         }
@@ -654,13 +674,117 @@ public partial class MainWindow : Window
 
     private void RefreshArrowForCursor()
     {
-        if (_panelOpen || !IsCursorNearRightEdge())
+        if (IsFullscreenAppActive() || _panelOpen || !IsCursorNearRightEdge())
         {
             HideArrow();
             return;
         }
 
         ShowArrowAtEdge();
+    }
+
+    private void SuppressForFullscreen()
+    {
+        if (!_fullscreenActive)
+        {
+            _fullscreenActive = true;
+            AppLog.Write("检测到全屏应用，暂停侧边栏自动弹出。");
+        }
+
+        _arrowHideAt = DateTime.MaxValue;
+        HideArrow();
+
+        if (_panelOpen)
+        {
+            CollapsePanel(ignorePin: true);
+        }
+    }
+
+    private static bool IsFullscreenNotificationState()
+    {
+        return NativeMethods.SHQueryUserNotificationState(out var state) == 0
+            && (state is NativeMethods.QunsBusy
+                or NativeMethods.QunsRunningD3DFullScreen
+                or NativeMethods.QunsPresentationMode);
+    }
+
+    private bool IsFullscreenAppActive()
+    {
+        try
+        {
+            var foreground = NativeMethods.GetForegroundWindow();
+            if (foreground == IntPtr.Zero)
+            {
+                return IsFullscreenNotificationState();
+            }
+
+            NativeMethods.GetWindowThreadProcessId(foreground, out var processId);
+            if (processId == (uint)Environment.ProcessId)
+            {
+                return false;
+            }
+
+            var className = new StringBuilder(64);
+            NativeMethods.GetClassName(foreground, className, className.Capacity);
+            var name = className.ToString();
+            if (name is "Progman" or "WorkerW" or "Shell_TrayWnd" or "Shell_SecondaryTrayWnd")
+            {
+                return false;
+            }
+
+            if (!NativeMethods.IsWindowVisible(foreground))
+            {
+                return false;
+            }
+
+            var handle = new WindowInteropHelper(this).Handle;
+            if (handle == IntPtr.Zero)
+            {
+                return false;
+            }
+
+            var ownMonitor = NativeMethods.MonitorFromWindow(handle, NativeMethods.MonitorDefaultToNearest);
+            var foregroundMonitor = NativeMethods.MonitorFromWindow(foreground, NativeMethods.MonitorDefaultToNearest);
+            if (ownMonitor == IntPtr.Zero || foregroundMonitor != ownMonitor)
+            {
+                return false;
+            }
+
+            if (IsFullscreenNotificationState())
+            {
+                return true;
+            }
+
+            if (NativeMethods.IsZoomed(foreground))
+            {
+                return false;
+            }
+
+            if (!NativeMethods.GetWindowRect(foreground, out var windowRect))
+            {
+                return false;
+            }
+
+            var monitorInfo = new NativeMethods.MonitorInfo
+            {
+                Size = Marshal.SizeOf<NativeMethods.MonitorInfo>()
+            };
+            if (!NativeMethods.GetMonitorInfo(foregroundMonitor, ref monitorInfo))
+            {
+                return false;
+            }
+
+            const int tolerance = 2;
+            return windowRect.Left <= monitorInfo.Monitor.Left + tolerance
+                && windowRect.Top <= monitorInfo.Monitor.Top + tolerance
+                && windowRect.Right >= monitorInfo.Monitor.Right - tolerance
+                && windowRect.Bottom >= monitorInfo.Monitor.Bottom - tolerance;
+        }
+        catch (Exception ex)
+        {
+            AppLog.Write("检测全屏应用失败。", ex);
+            return false;
+        }
     }
 
     private void ShowArrowAtEdge()
@@ -1064,6 +1188,12 @@ public partial class MainWindow : Window
 
     private void Window_MouseEnter(object sender, MouseEventArgs e)
     {
+        if (IsFullscreenAppActive())
+        {
+            SuppressForFullscreen();
+            return;
+        }
+
         if (!_panelOpen)
         {
             ExpandPanel();
@@ -1177,6 +1307,13 @@ public partial class MainWindow : Window
 
     private void ArrowTab_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
+        if (IsFullscreenAppActive())
+        {
+            SuppressForFullscreen();
+            e.Handled = true;
+            return;
+        }
+
         ExpandPanel();
         e.Handled = true;
     }

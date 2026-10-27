@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Windows;
@@ -21,6 +22,17 @@ public partial class App : Application
     {
         base.OnStartup(e);
         AppLog.Write("SideDesk 启动。");
+
+        try
+        {
+            using var process = Process.GetCurrentProcess();
+            process.PriorityClass = ProcessPriorityClass.BelowNormal;
+            AppLog.Write("进程优先级已设为 BelowNormal。");
+        }
+        catch (Exception ex)
+        {
+            AppLog.Write("设置进程优先级失败。", ex);
+        }
 
         if (e.Args.Any(arg => arg.Equals("--restore-icons", StringComparison.OrdinalIgnoreCase)))
         {
