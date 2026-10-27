@@ -42,6 +42,7 @@ public partial class MainWindow : Window
     private AppearanceWindow? _appearanceWindow;
     private DesktopItem? _contextItem;
     private bool _panelOpen = true;
+    private bool _manualReveal;
     private bool _appearanceOpen;
     private bool _arrowShown;
     private bool _fullscreenActive;
@@ -123,7 +124,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        ExpandPanel(focusSearch: true);
+        ExpandPanel(focusSearch: true, manual: true);
         try
         {
             Activate();
@@ -282,7 +283,7 @@ public partial class MainWindow : Window
         }
         else
         {
-            ExpandPanel(focusSearch: true);
+            ExpandPanel(focusSearch: true, manual: true);
         }
     }
 
@@ -467,7 +468,7 @@ public partial class MainWindow : Window
         UpdateTrayState();
     }
 
-    private void ExpandPanel(bool focusSearch = false)
+    private void ExpandPanel(bool focusSearch = false, bool manual = false)
     {
         if (_exiting)
         {
@@ -476,6 +477,7 @@ public partial class MainWindow : Window
 
         _collapseTimer.Stop();
         _panelOpen = true;
+        _manualReveal = manual;
         _edgeRevealArmed = true;
         _revealGraceUntil = DateTime.UtcNow.AddSeconds(2.5);
         SetArrowVisible(false);
@@ -512,6 +514,9 @@ public partial class MainWindow : Window
 
         _collapseTimer.Stop();
         _panelOpen = false;
+        _manualReveal = false;
+        _edgeRevealArmed = true;
+        _revealGraceUntil = DateTime.MinValue;
         SetSlide(CollapsedOffset, animate);
         if (!animate)
         {
@@ -529,6 +534,7 @@ public partial class MainWindow : Window
     private void ScheduleCollapse(int delayMilliseconds)
     {
         if (_settings.Pinned
+            || _manualReveal
             || !_panelOpen
             || _exiting
             || _appearanceOpen
