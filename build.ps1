@@ -34,7 +34,7 @@ Get-ChildItem -LiteralPath $tools -Filter '*.cmd' | ForEach-Object {
 Get-ChildItem -LiteralPath $dist -Filter '*.pdb' -ErrorAction SilentlyContinue | Remove-Item -Force
 
 if (-not $SkipZip) {
-    $zip = Join-Path $root 'SideDesk-1.4.1-win-x64.zip'
+    $zip = Join-Path $root 'SideDesk-1.4.2-win-x64.zip'
     if (Test-Path -LiteralPath $zip) {
         Remove-Item -LiteralPath $zip -Force
     }

@@ -725,6 +725,12 @@ public partial class MainWindow : Window
                 or NativeMethods.QunsPresentationMode);
     }
 
+    private bool IsFullscreenSuppressed()
+    {
+        return IsFullscreenAppActive()
+            || (_fullscreenActive && DateTime.UtcNow < _fullscreenHoldUntil);
+    }
+
     private bool IsFullscreenAppActive()
     {
         try
@@ -1253,7 +1259,7 @@ public partial class MainWindow : Window
 
     private void Window_MouseEnter(object sender, MouseEventArgs e)
     {
-        if (IsFullscreenAppActive())
+        if (IsFullscreenSuppressed())
         {
             SuppressForFullscreen();
             return;
@@ -1372,7 +1378,7 @@ public partial class MainWindow : Window
 
     private void ArrowTab_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
-        if (IsFullscreenAppActive())
+        if (IsFullscreenSuppressed())
         {
             SuppressForFullscreen();
             e.Handled = true;
