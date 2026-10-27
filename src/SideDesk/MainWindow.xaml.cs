@@ -842,12 +842,11 @@ public partial class MainWindow : Window
                 return IsFullscreenNotificationState();
             }
 
-            var className = new StringBuilder(64);
-            NativeMethods.GetClassName(foreground, className, className.Capacity);
-            var name = className.ToString();
-            if (name is "Progman" or "WorkerW" or "Shell_TrayWnd" or "Shell_SecondaryTrayWnd")
+            if (IsShellWindow(foreground))
             {
-                return IsFullscreenNotificationState();
+                // The desktop/taskbar covers the whole monitor but is not a
+                // fullscreen app. Never suppress the sidebar while it is active.
+                return false;
             }
 
             if (!NativeMethods.IsWindowVisible(foreground))
@@ -882,12 +881,23 @@ public partial class MainWindow : Window
         }
     }
 
+    private static bool IsShellWindow(IntPtr window)
+    {
+        var className = new StringBuilder(64);
+        NativeMethods.GetClassName(window, className, className.Capacity);
+        return className.ToString() is "Progman"
+            or "WorkerW"
+            or "Shell_TrayWnd"
+            or "Shell_SecondaryTrayWnd";
+    }
+
     private static bool IsWindowFullscreen(IntPtr window, IntPtr monitor)
     {
         if (window == IntPtr.Zero
             || !NativeMethods.IsWindow(window)
             || !NativeMethods.IsWindowVisible(window)
-            || NativeMethods.IsIconic(window))
+            || NativeMethods.IsIconic(window)
+            || IsShellWindow(window))
         {
             return false;
         }
