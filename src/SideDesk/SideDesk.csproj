@@ -11,7 +11,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>SideDesk</AssemblyName>
     <RootNamespace>SideDesk</RootNamespace>
-    <Version>1.4.4</Version>
+    <Version>1.5.0</Version>
     <Authors>SideDesk</Authors>
     <Product>SideDesk 桌面侧边栏</Product>
     <Description>把桌面图标收进可自动隐藏的侧边栏，让壁纸保持干净。</Description>

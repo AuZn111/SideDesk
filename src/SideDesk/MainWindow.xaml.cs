@@ -572,19 +572,43 @@ public partial class MainWindow : Window
     private void SetSlide(double offset, bool animate)
     {
         SlideTransform.BeginAnimation(TranslateTransform.XProperty, null);
+        ContentSlideTransform.BeginAnimation(TranslateTransform.XProperty, null);
+        PanelRoot.BeginAnimation(OpacityProperty, null);
+
         if (!animate)
         {
             SlideTransform.X = offset;
+            ContentSlideTransform.X = offset < 1 ? 0 : 14;
+            PanelRoot.Opacity = 1;
             return;
         }
 
+        var opening = offset < 1;
         var animation = new DoubleAnimation
         {
             To = offset,
-            Duration = TimeSpan.FromMilliseconds(offset < 1 ? 260 : 300),
-            EasingFunction = new CubicEase
+            Duration = TimeSpan.FromMilliseconds(opening ? 520 : 420),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut },
+            FillBehavior = FillBehavior.HoldEnd
+        };
+
+        var contentSlide = new DoubleAnimation
+        {
+            From = opening ? 14 : 0,
+            To = opening ? 0 : 14,
+            Duration = TimeSpan.FromMilliseconds(opening ? 460 : 320),
+            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+            FillBehavior = FillBehavior.HoldEnd
+        };
+
+        var fade = new DoubleAnimation
+        {
+            From = opening ? 0.45 : 1,
+            To = opening ? 1 : 0,
+            Duration = TimeSpan.FromMilliseconds(opening ? 360 : 260),
+            EasingFunction = new QuadraticEase
             {
-                EasingMode = offset < 1 ? EasingMode.EaseOut : EasingMode.EaseInOut
+                EasingMode = opening ? EasingMode.EaseOut : EasingMode.EaseIn
             },
             FillBehavior = FillBehavior.HoldEnd
         };
@@ -605,6 +629,8 @@ public partial class MainWindow : Window
         }
 
         SlideTransform.BeginAnimation(TranslateTransform.XProperty, animation);
+        ContentSlideTransform.BeginAnimation(TranslateTransform.XProperty, contentSlide);
+        PanelRoot.BeginAnimation(OpacityProperty, fade);
     }
 
     private void FinishCollapse()
@@ -615,6 +641,7 @@ public partial class MainWindow : Window
         }
 
         UpdateLayout();
+        PanelRoot.Opacity = 1;
         RefreshArrowForCursor();
         UpdateWindowRegion(expanded: false);
     }
@@ -622,10 +649,19 @@ public partial class MainWindow : Window
     private void SetArrowVisible(bool visible)
     {
         _arrowShown = visible;
+        ArrowTab.BeginAnimation(OpacityProperty, null);
         if (visible)
         {
-            ArrowTab.Opacity = Math.Clamp(_settings.ArrowOpacity, 0.15, 1.0);
+            var target = Math.Clamp(_settings.ArrowOpacity, 0.15, 1.0);
+            ArrowTab.Opacity = 0;
             ArrowTab.Visibility = Visibility.Visible;
+            ArrowTab.BeginAnimation(
+                OpacityProperty,
+                new DoubleAnimation(target, TimeSpan.FromMilliseconds(190))
+                {
+                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+                    FillBehavior = FillBehavior.HoldEnd
+                });
         }
         else
         {
@@ -1453,6 +1489,7 @@ public partial class MainWindow : Window
     {
         if (_arrowShown)
         {
+            ArrowTab.BeginAnimation(OpacityProperty, null);
             ArrowTab.Opacity = Math.Clamp(_settings.ArrowOpacity, 0.15, 1.0);
         }
     }

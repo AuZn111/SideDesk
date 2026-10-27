@@ -40,7 +40,10 @@
                 <TranslateTransform x:Name="SlideTransform" X="0" />
             </Border.RenderTransform>
 
-            <Grid Margin="18,17,18,13">
+            <Grid x:Name="ContentRoot" Margin="18,17,18,13">
+                <Grid.RenderTransform>
+                    <TranslateTransform x:Name="ContentSlideTransform" X="0" />
+                </Grid.RenderTransform>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
