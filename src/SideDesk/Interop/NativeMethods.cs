@@ -12,6 +12,7 @@ internal static class NativeMethods
     internal const int QunsBusy = 1;
     internal const int QunsRunningD3DFullScreen = 2;
     internal const int QunsPresentationMode = 3;
+    internal const int DwmwaExtendedFrameBounds = 9;
 
     internal const int GwlExStyle = -20;
     internal const long WsExToolWindow = 0x00000080L;
@@ -67,6 +68,13 @@ internal static class NativeMethods
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static extern bool IsZoomed(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static extern bool IsIconic(IntPtr hWnd);
+
+    [DllImport("dwmapi.dll")]
+    internal static extern int DwmGetWindowAttribute(IntPtr hWnd, int attribute, out Rect value, int size);
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     internal static extern int GetClassName(IntPtr hWnd, StringBuilder className, int maxCount);
