@@ -45,6 +45,7 @@ public partial class MainWindow : Window
     private bool _appearanceOpen;
     private bool _arrowShown;
     private bool _fullscreenActive;
+    private bool _edgeRevealArmed = true;
     private IntPtr _fullscreenWindow;
     private DateTime _fullscreenHoldUntil = DateTime.MinValue;
     private DateTime _arrowHideAt = DateTime.MaxValue;
@@ -656,7 +657,20 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (IsCursorNearRightEdge())
+        var nearEdge = IsCursorNearRightEdge();
+        if (!nearEdge)
+        {
+            // Moving away from the edge re-arms the reveal. This prevents the
+            // panel from jumping out immediately after a fullscreen app exits.
+            _edgeRevealArmed = true;
+        }
+        else if (!_edgeRevealArmed)
+        {
+            HideArrow();
+            return;
+        }
+
+        if (nearEdge)
         {
             _arrowHideAt = DateTime.MaxValue;
             if (!_arrowShown)
@@ -682,10 +696,17 @@ public partial class MainWindow : Window
 
     private void RefreshArrowForCursor()
     {
+        var nearEdge = IsCursorNearRightEdge();
+        if (!nearEdge)
+        {
+            _edgeRevealArmed = true;
+        }
+
         if (IsFullscreenAppActive()
             || (_fullscreenActive && DateTime.UtcNow < _fullscreenHoldUntil)
+            || !_edgeRevealArmed
             || _panelOpen
-            || !IsCursorNearRightEdge())
+            || !nearEdge)
         {
             HideArrow();
             return;
@@ -708,6 +729,7 @@ public partial class MainWindow : Window
 
     private void KeepFullscreenSuppressed()
     {
+        _edgeRevealArmed = false;
         _arrowHideAt = DateTime.MaxValue;
         HideArrow();
 
@@ -1265,6 +1287,11 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (!_edgeRevealArmed)
+        {
+            return;
+        }
+
         if (!_panelOpen)
         {
             ExpandPanel();
@@ -1381,6 +1408,12 @@ public partial class MainWindow : Window
         if (IsFullscreenSuppressed())
         {
             SuppressForFullscreen();
+            e.Handled = true;
+            return;
+        }
+
+        if (!_edgeRevealArmed)
+        {
             e.Handled = true;
             return;
         }
