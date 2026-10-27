@@ -48,6 +48,7 @@ public partial class MainWindow : Window
     private bool _edgeRevealArmed = true;
     private IntPtr _fullscreenWindow;
     private DateTime _fullscreenHoldUntil = DateTime.MinValue;
+    private DateTime _revealGraceUntil = DateTime.MinValue;
     private DateTime _arrowHideAt = DateTime.MaxValue;
     private bool _exiting;
     private bool _iconsHidden;
@@ -475,6 +476,8 @@ public partial class MainWindow : Window
 
         _collapseTimer.Stop();
         _panelOpen = true;
+        _edgeRevealArmed = true;
+        _revealGraceUntil = DateTime.UtcNow.AddSeconds(2.5);
         SetArrowVisible(false);
         UpdateWindowRegion(expanded: true);
         SetSlide(0, animate: true);
@@ -534,8 +537,14 @@ public partial class MainWindow : Window
             return;
         }
 
+        var grace = (int)Math.Ceiling((_revealGraceUntil - DateTime.UtcNow).TotalMilliseconds);
+        if (grace > delayMilliseconds)
+        {
+            delayMilliseconds = grace;
+        }
+
         _collapseTimer.Stop();
-        _collapseTimer.Interval = TimeSpan.FromMilliseconds(delayMilliseconds);
+        _collapseTimer.Interval = TimeSpan.FromMilliseconds(Math.Max(1, delayMilliseconds));
         _collapseTimer.Start();
     }
 
@@ -649,6 +658,7 @@ public partial class MainWindow : Window
         if (_fullscreenActive)
         {
             _fullscreenActive = false;
+            _edgeRevealArmed = true;
             AppLog.Write("全屏应用已退出，恢复侧边栏自动弹出。");
         }
 
@@ -1281,6 +1291,11 @@ public partial class MainWindow : Window
 
     private void Window_MouseEnter(object sender, MouseEventArgs e)
     {
+        if (_panelOpen)
+        {
+            _collapseTimer.Stop();
+        }
+
         if (IsFullscreenSuppressed())
         {
             SuppressForFullscreen();
@@ -1295,10 +1310,6 @@ public partial class MainWindow : Window
         if (!_panelOpen)
         {
             ExpandPanel();
-        }
-        else
-        {
-            _collapseTimer.Stop();
         }
     }
 
