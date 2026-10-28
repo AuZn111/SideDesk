@@ -12,6 +12,7 @@ public sealed class AppSettings
     public string SidebarColor { get; set; } = "#8B5CF6";
     public double SidebarOpacity { get; set; } = 0.90;
     public double ArrowOpacity { get; set; } = 0.50;
+    public bool AutoHideArrow { get; set; } = true;
 }
 
 public static class SettingsStore

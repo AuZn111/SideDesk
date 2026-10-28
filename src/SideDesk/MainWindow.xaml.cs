@@ -94,7 +94,7 @@ public partial class MainWindow : Window
 
         _arrowTimer = new DispatcherTimer(DispatcherPriority.Background, Dispatcher)
         {
-            Interval = TimeSpan.FromMilliseconds(120)
+            Interval = TimeSpan.FromMilliseconds(80)
         };
         _arrowTimer.Tick += ArrowTimer_Tick;
 
@@ -663,7 +663,7 @@ public partial class MainWindow : Window
             ArrowTab.Visibility = Visibility.Visible;
             ArrowTab.BeginAnimation(
                 OpacityProperty,
-                new DoubleAnimation(target, TimeSpan.FromMilliseconds(190))
+                new DoubleAnimation(target, TimeSpan.FromMilliseconds(120))
                 {
                     EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
                     FillBehavior = FillBehavior.HoldEnd
@@ -691,6 +691,14 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (_fullscreenActive && IsDesktopForeground())
+        {
+            _fullscreenActive = false;
+            _fullscreenHoldUntil = DateTime.MinValue;
+            _edgeRevealArmed = true;
+            AppLog.Write("桌面已激活，恢复侧边栏自动弹出。");
+        }
+
         if (_fullscreenActive && DateTime.UtcNow < _fullscreenHoldUntil)
         {
             KeepFullscreenSuppressed();
@@ -706,6 +714,17 @@ public partial class MainWindow : Window
 
         if (_panelOpen)
         {
+            return;
+        }
+
+        if (!_settings.AutoHideArrow)
+        {
+            _arrowHideAt = DateTime.MaxValue;
+            if (!_arrowShown)
+            {
+                ShowArrowAtEdge();
+            }
+
             return;
         }
 
@@ -748,17 +767,26 @@ public partial class MainWindow : Window
 
     private void RefreshArrowForCursor()
     {
+        if (IsFullscreenSuppressed() || _panelOpen)
+        {
+            HideArrow();
+            return;
+        }
+
+        if (!_settings.AutoHideArrow)
+        {
+            _edgeRevealArmed = true;
+            ShowArrowAtEdge();
+            return;
+        }
+
         var nearEdge = IsCursorNearRightEdge();
         if (!nearEdge)
         {
             _edgeRevealArmed = true;
         }
 
-        if (IsFullscreenAppActive()
-            || (_fullscreenActive && DateTime.UtcNow < _fullscreenHoldUntil)
-            || !_edgeRevealArmed
-            || _panelOpen
-            || !nearEdge)
+        if (!_edgeRevealArmed || !nearEdge)
         {
             HideArrow();
             return;
@@ -775,7 +803,7 @@ public partial class MainWindow : Window
             AppLog.Write("检测到全屏应用，暂停侧边栏自动弹出。");
         }
 
-        _fullscreenHoldUntil = DateTime.UtcNow.AddSeconds(2);
+        _fullscreenHoldUntil = DateTime.UtcNow.AddMilliseconds(800);
         KeepFullscreenSuppressed();
     }
 
@@ -799,8 +827,25 @@ public partial class MainWindow : Window
                 or NativeMethods.QunsPresentationMode);
     }
 
+    private bool IsDesktopForeground()
+    {
+        var foreground = NativeMethods.GetForegroundWindow();
+        if (foreground == IntPtr.Zero)
+        {
+            return false;
+        }
+
+        NativeMethods.GetWindowThreadProcessId(foreground, out var processId);
+        return processId != (uint)Environment.ProcessId && IsShellWindow(foreground);
+    }
+
     private bool IsFullscreenSuppressed()
     {
+        if (IsDesktopForeground())
+        {
+            return false;
+        }
+
         return IsFullscreenAppActive()
             || (_fullscreenActive && DateTime.UtcNow < _fullscreenHoldUntil);
     }
@@ -975,7 +1020,7 @@ public partial class MainWindow : Window
 
         var screenWidth = NativeMethods.GetSystemMetrics(0);
         var dpi = VisualTreeHelper.GetDpi(this);
-        var threshold = Math.Max(6, (int)Math.Ceiling(9 * dpi.DpiScaleX));
+        var threshold = Math.Max(8, (int)Math.Ceiling(14 * dpi.DpiScaleX));
         return point.X >= screenWidth - threshold;
     }
 
@@ -1348,7 +1393,7 @@ public partial class MainWindow : Window
             _collapseTimer.Stop();
         }
 
-        if (IsFullscreenSuppressed())
+        if (_fullscreenActive && !IsDesktopForeground())
         {
             SuppressForFullscreen();
             return;
@@ -1468,7 +1513,7 @@ public partial class MainWindow : Window
 
     private void ArrowTab_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
-        if (IsFullscreenSuppressed())
+        if (_fullscreenActive && !IsDesktopForeground())
         {
             SuppressForFullscreen();
             e.Handled = true;
@@ -1507,6 +1552,25 @@ public partial class MainWindow : Window
         {
             ArrowTab.BeginAnimation(OpacityProperty, null);
             ArrowTab.Opacity = Math.Clamp(_settings.ArrowOpacity, 0.15, 1.0);
+        }
+    }
+
+    public void ApplyArrowVisibilitySetting()
+    {
+        if (_panelOpen || IsFullscreenSuppressed())
+        {
+            HideArrow();
+            return;
+        }
+
+        if (!_settings.AutoHideArrow)
+        {
+            _edgeRevealArmed = true;
+            ShowArrowAtEdge();
+        }
+        else
+        {
+            RefreshArrowForCursor();
         }
     }
 

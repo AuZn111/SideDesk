@@ -172,10 +172,16 @@
                                     Style="{StaticResource DarkSlider}"
                                     Minimum="15" Maximum="100"
                                     ValueChanged="ArrowOpacity_ValueChanged" />
-                            <TextBlock Text="箭头平时自动隐藏；把光标移到屏幕右边缘时出现。"
+                            <CheckBox x:Name="AutoHideArrowToggle"
+                                      Style="{StaticResource DarkToggle}"
+                                      Content="自动隐藏箭头"
+                                      Margin="0,10,0,0"
+                                      Checked="AutoHideArrow_Changed"
+                                      Unchecked="AutoHideArrow_Changed" />
+                            <TextBlock Text="开启后：箭头平时隐藏，移到屏幕右边缘时出现。关闭后：箭头常驻右边缘，方便直接点击。"
                                        FontSize="9.5"
                                        Foreground="{StaticResource TextMuted}"
-                                       Margin="0,4,0,0"
+                                       Margin="0,5,0,0"
                                        TextWrapping="Wrap" />
                         </StackPanel>
                     </Border>

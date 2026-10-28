@@ -34,6 +34,7 @@ public partial class AppearanceWindow : Window
 
         SidebarOpacitySlider.Value = Math.Clamp(_settings.SidebarOpacity, 0.35, 1.0) * 100;
         ArrowOpacitySlider.Value = Math.Clamp(_settings.ArrowOpacity, 0.15, 1.0) * 100;
+        AutoHideArrowToggle.IsChecked = _settings.AutoHideArrow;
         SidebarHexBox.Text = _settings.SidebarColor;
         BuildSwatches(SidebarSwatches, _settings.SidebarColor);
         _loading = false;
@@ -126,6 +127,17 @@ public partial class AppearanceWindow : Window
         _owner.ApplyArrowOpacity();
     }
 
+    private void AutoHideArrow_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loading)
+        {
+            return;
+        }
+
+        _settings.AutoHideArrow = AutoHideArrowToggle.IsChecked == true;
+        _owner.ApplyArrowVisibilitySetting();
+    }
+
     private void UpdateSidebarLabels()
     {
         SidebarOpacityValue.Text = $"{Math.Round(_settings.SidebarOpacity * 100)}%";
@@ -160,11 +172,13 @@ public partial class AppearanceWindow : Window
         _settings.SidebarColor = "#8B5CF6";
         _settings.SidebarOpacity = 0.90;
         _settings.ArrowOpacity = 0.50;
+        _settings.AutoHideArrow = true;
 
         _loading = true;
         SidebarHexBox.Text = _settings.SidebarColor;
         SidebarOpacitySlider.Value = _settings.SidebarOpacity * 100;
         ArrowOpacitySlider.Value = _settings.ArrowOpacity * 100;
+        AutoHideArrowToggle.IsChecked = true;
         _loading = false;
 
         UpdateSwatchSelection(SidebarSwatches, _settings.SidebarColor);
