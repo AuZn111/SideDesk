@@ -1297,7 +1297,10 @@ public partial class MainWindow : Window
         if (_contextItem is null)
         {
             e.Handled = true;
+            return;
         }
+
+        OpenLocationMenuItem.IsEnabled = !_contextItem.IsSystem;
     }
 
     private void OpenItem(DesktopItem? item)
@@ -1309,14 +1312,24 @@ public partial class MainWindow : Window
 
         try
         {
-            var workingDirectory = item.IsFolder
-                ? Directory.GetParent(item.Path)?.FullName
-                : Path.GetDirectoryName(item.Path);
-            Process.Start(new ProcessStartInfo(item.Path)
+            if (item.IsSystem)
             {
-                UseShellExecute = true,
-                WorkingDirectory = workingDirectory ?? AppContext.BaseDirectory
-            });
+                Process.Start(new ProcessStartInfo("explorer.exe", $"\"{item.Path}\"")
+                {
+                    UseShellExecute = true
+                });
+            }
+            else
+            {
+                var workingDirectory = item.IsFolder
+                    ? Directory.GetParent(item.Path)?.FullName
+                    : Path.GetDirectoryName(item.Path);
+                Process.Start(new ProcessStartInfo(item.Path)
+                {
+                    UseShellExecute = true,
+                    WorkingDirectory = workingDirectory ?? AppContext.BaseDirectory
+                });
+            }
 
             Keyboard.ClearFocus();
             if (!_settings.Pinned)
@@ -1333,7 +1346,7 @@ public partial class MainWindow : Window
 
     private void OpenLocation(DesktopItem? item)
     {
-        if (item is null)
+        if (item is null || item.IsSystem)
         {
             return;
         }

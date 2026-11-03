@@ -12,28 +12,40 @@ internal static class ShellIcons
 {
     private const uint ShgfiIcon = 0x000000100;
     private const uint ShgfiLargeIcon = 0x000000000;
+    private const uint ShgfiPidl = 0x000000008;
     private const uint ShgfiSysIconIndex = 0x000004000;
     private const int ShilJumbo = 0x4;
     private const int IldTransparent = 0x00000001;
 
-    public static ImageSource? Load(string path, bool isFolder)
+    public static ImageSource? Load(string path, bool isFolder, bool shellItem = false)
     {
         try
         {
-            var index = GetIconIndex(path);
-            if (index >= 0)
+            if (shellItem)
             {
-                var jumbo = GetImageListIcon(index);
-                if (jumbo is not null)
+                var shellIcon = LoadShellItem(path);
+                if (shellIcon is not null)
                 {
-                    return jumbo;
+                    return shellIcon;
                 }
             }
-
-            var handle = GetIconHandle(path);
-            if (handle != IntPtr.Zero)
+            else
             {
-                return FromHIcon(handle, 256);
+                var index = GetIconIndex(path);
+                if (index >= 0)
+                {
+                    var jumbo = GetImageListIcon(index);
+                    if (jumbo is not null)
+                    {
+                        return jumbo;
+                    }
+                }
+
+                var handle = GetIconHandle(path);
+                if (handle != IntPtr.Zero)
+                {
+                    return FromHIcon(handle, 256);
+                }
             }
         }
         catch (Exception ex)
@@ -43,6 +55,52 @@ internal static class ShellIcons
 
         var name = isFolder ? Path.GetFileName(path) : Path.GetFileNameWithoutExtension(path);
         return IconFactory.CreateFallback(name, isFolder);
+    }
+
+    private static ImageSource? LoadShellItem(string parsingName)
+    {
+        if (SHParseDisplayName(parsingName, IntPtr.Zero, out var pidl, 0, out _) != 0
+            || pidl == IntPtr.Zero)
+        {
+            return null;
+        }
+
+        try
+        {
+            var info = new ShellFileInfo();
+            var result = SHGetFileInfo(
+                pidl,
+                0,
+                ref info,
+                (uint)Marshal.SizeOf<ShellFileInfo>(),
+                ShgfiPidl | ShgfiSysIconIndex | ShgfiLargeIcon);
+            if (result != IntPtr.Zero && info.iIcon >= 0)
+            {
+                var jumbo = GetImageListIcon(info.iIcon);
+                if (jumbo is not null)
+                {
+                    return jumbo;
+                }
+            }
+
+            var iconInfo = new ShellFileInfo();
+            var iconResult = SHGetFileInfo(
+                pidl,
+                0,
+                ref iconInfo,
+                (uint)Marshal.SizeOf<ShellFileInfo>(),
+                ShgfiPidl | ShgfiIcon | ShgfiLargeIcon);
+            if (iconResult != IntPtr.Zero && iconInfo.hIcon != IntPtr.Zero)
+            {
+                return FromHIcon(iconInfo.hIcon, 256);
+            }
+        }
+        finally
+        {
+            Marshal.FreeCoTaskMem(pidl);
+        }
+
+        return null;
     }
 
     private static int GetIconIndex(string path)
@@ -180,6 +238,22 @@ internal static class ShellIcons
         ref ShellFileInfo psfi,
         uint cbFileInfo,
         uint uFlags);
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    private static extern IntPtr SHGetFileInfo(
+        IntPtr pidl,
+        uint dwFileAttributes,
+        ref ShellFileInfo psfi,
+        uint cbFileInfo,
+        uint uFlags);
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    private static extern int SHParseDisplayName(
+        string pszName,
+        IntPtr pbc,
+        out IntPtr ppidl,
+        uint sfgaoIn,
+        out uint psfgaoOut);
 
     [DllImport("shell32.dll")]
     private static extern int SHGetImageList(

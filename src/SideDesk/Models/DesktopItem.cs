@@ -13,6 +13,7 @@ public sealed class DesktopItem
     public required string KindLabel { get; init; }
     public required int KindRank { get; init; }
     public required bool IsFolder { get; init; }
+    public bool IsSystem { get; init; }
     public ImageSource? Icon { get; init; }
 
     public static string MakeShortName(string name, int budget = 24)

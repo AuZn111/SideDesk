@@ -118,8 +118,36 @@ public sealed class DesktopCatalog : IDisposable
             });
         }
 
+        items.AddRange(CreateSystemItems());
         items.Sort(CompareItems);
         return items;
+    }
+
+    private static IEnumerable<DesktopItem> CreateSystemItems()
+    {
+        var locations = new (string Name, string Path)[]
+        {
+            ("此电脑", "::{20D04FE0-3AEA-1069-A2D8-08002B30309D}"),
+            ("回收站", "::{645FF040-5081-101B-9F08-00AA002F954E}"),
+            ("网络", "::{F02C1A0D-BE21-4350-88B0-7367FC96EF3C}"),
+            ("控制面板", "::{26EE0668-A00A-44D7-9371-BEB064C98683}")
+        };
+
+        foreach (var location in locations)
+        {
+            yield return new DesktopItem
+            {
+                Path = location.Path,
+                DisplayName = location.Name,
+                ShortName = DesktopItem.MakeShortName(location.Name),
+                KindLabel = "系统位置",
+                KindRank = -1,
+                IsFolder = true,
+                IsSystem = true,
+                ToolTipText = $"{location.Name}\n系统位置 · {location.Path}\n双击打开",
+                Icon = ShellIcons.Load(location.Path, isFolder: true, shellItem: true)
+            };
+        }
     }
 
     private List<Entry> EnumerateEntries(CancellationToken cancellationToken)

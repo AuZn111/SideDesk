@@ -203,7 +203,7 @@
                             <ListBox.ContextMenu>
                                 <ContextMenu Style="{StaticResource DarkContextMenu}">
                                     <MenuItem Header="打开" Click="OpenContextMenu_Click" />
-                                    <MenuItem Header="打开所在位置" Click="OpenLocationContextMenu_Click" />
+                                    <MenuItem x:Name="OpenLocationMenuItem" Header="打开所在位置" Click="OpenLocationContextMenu_Click" />
                                     <MenuItem Header="复制路径" Click="CopyPathContextMenu_Click" />
                                     <Separator />
                                     <MenuItem Header="刷新" Click="RefreshMenu_Click" />
